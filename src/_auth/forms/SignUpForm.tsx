@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { SignUpValidation } from '@/lib/validation'
+import { SignupValidation, SigninValidation } from '@/lib/validation'
 import Loader from '@/components/shared/Loader'
 import { Link, useNavigate } from 'react-router-dom'
 // import { createUserAccount } from '@/lib/appwrite/api'
@@ -30,8 +30,8 @@ const SignUpForm = () => {
     const { mutateAsync: signInAccount, isPending: isSigninIn } = useSignInAccount()
 
     // 1. Define our form
-    const form = useForm<z.infer<typeof SignUpValidation>>({
-        resolver: zodResolver(SignUpValidation),
+    const form = useForm<z.infer<typeof SignupValidation>>({
+        resolver: zodResolver(SignupValidation),
         defaultValues: {
             name: '',
             username: '',
@@ -40,7 +40,7 @@ const SignUpForm = () => {
         },
     })
     // 2. Define our submit handler
-    async function onSubmit(values: z.infer<typeof SignUpValidation>) {
+    async function onSubmit(values: z.infer<typeof SignupValidation>) {
         // Do something with values
         const newUser = await createUserAccount(values)
         if(!newUser) {
@@ -57,6 +57,7 @@ const SignUpForm = () => {
         }
 
         const isLoggedIn = await checkAuthUser()
+
         if(isLoggedIn) {
             form.reset()
             navigate('/')
@@ -117,7 +118,7 @@ const SignUpForm = () => {
                 name="password"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Passwprd</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                         <Input type='password' className='shad-input' {...field} />
                     </FormControl>
