@@ -10,6 +10,10 @@ import FileUploader from "../shared/FileUploader"
 import { Input } from "../ui/input"
 import { PostValidation } from "@/lib/validation"
 import { Models } from "appwrite"
+import { useUserContext } from "@/context/AuthContext"
+import { useToast } from "../ui/use-toast"
+import { useNavigate } from "react-router-dom"
+import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
 
 type PostFormProps = {
     post?: Models.Document;
@@ -18,6 +22,9 @@ type PostFormProps = {
 
 const PostForm = ({ post }: PostFormProps) => {
 
+    const navigate = useNavigate()
+    const { toast } = useToast()
+    const { user} = useUserContext()
     const form = useForm<z.infer<typeof PostValidation>>({
         resolver: zodResolver(PostValidation),
         defaultValues: {
@@ -27,9 +34,23 @@ const PostForm = ({ post }: PostFormProps) => {
             tags: post ? post.tags.join(',') : ''
         },
     })
+    const { mutateAsync: createPost, isPending: isLoadingCreate } = useCreatePost()
+    
+    async function onSubmit(values: z.infer<typeof PostValidation>) {
+        const newPost = await createPost({
+            ...values,
+            userId: user.id,
+        })
 
-    function onSubmit(values: z.infer<typeof PostValidation>) {
-        console.log(values)
+        console.log(newPost)
+
+        if(!newPost) {
+            toast({
+                title: 'Please try again'
+            })
+        }
+
+        navigate('/');
     }
     return (
         <Form {...form}>
