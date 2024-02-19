@@ -1,4 +1,4 @@
-import { INewUser, INewPost } from "@/types";
+import { INewUser, INewPost, IUpdatePost } from "@/types";
 import { account, appwriteConfig, avatars, databases, storage } from "./config";
 import { ID, Query } from "appwrite";
 
@@ -63,6 +63,7 @@ export async function getCurrentUser() {
     try {
         const currentAccount = await account.get()
         if(!currentAccount) throw Error
+        // Extract info about user from Users colleciton in database
         const currentUser = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.userCollectionId,
@@ -178,4 +179,126 @@ export async function getRecentPosts() {
     )
     if(!posts) throw Error
     return posts
+}
+
+export async function likePost(postId: string, likesArray: string[]) {
+    try {
+        const updatedPost = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            postId,
+            {
+                likes: likesArray
+            }
+        )
+        if(!updatedPost) throw Error;
+        return updatedPost
+    } catch (error) {
+        console.log(error)
+    }
+}
+export async function savePost(postId: string, userId: string) {
+    try {
+        const updatedPost = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.savesCollectionId,
+            ID.unique(),
+            {
+                user: userId,
+                post: postId,
+            }
+        )
+        if(!updatedPost) throw Error;
+        return updatedPost
+    } catch (error) {
+        console.log(error)
+    }
+}
+export async function deleteSavedPost(savedRecordId: string) {
+    try {
+        const statusCode = await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.savesCollectionId,
+            savedRecordId
+        )
+        if(!statusCode) throw Error;
+        return { status: 'ok' }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export async function getPostById(postId?: string) {
+    if(!postId) throw Error
+
+    try {
+        const post = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            postId
+        )
+        if(!post) throw Error
+        return post
+    } catch (error) {
+        console.log(error)
+    }
+}
+export async function updatePost(post: IUpdatePost) {
+    const hasFileToUpdate = post.file.length > 0
+    try {
+        let image = {
+            imageUrl: post.imageUrl,
+            imageId: post.imageId
+        }
+        if(hasFileToUpdate) {
+            const uploadedFile = await uploadFile(post.file[0]);
+            if(!uploadedFile) throw Error
+            
+            const fileUrl = getFilePreview(uploadedFile.$id)
+            if(!fileUrl) {
+                deleteFile(uploadedFile.$id)
+                throw Error
+            }
+
+            image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id}
+        }
+        const tags = post.tags?.replace(/ /g,'').split(',') || []
+
+        const updatedPost = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            post.postId,
+            {
+                caption: post.caption,
+                imageUrl: image.imageUrl,
+                imageId: image.imageId,
+                location: post.location,
+                tags: tags
+            }
+        )
+        if(!updatePost) {
+            await deleteFile(post.imageId)
+            throw Error
+        }
+        return updatedPost
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export async function deletePost(postId: string, imageId: string) {
+    if(!postId || !imageId) throw Error
+
+    try {
+        await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            postId
+        )
+
+        return { status: 'ok' }
+    } catch (error) {
+        console.log(error)
+    }
 }

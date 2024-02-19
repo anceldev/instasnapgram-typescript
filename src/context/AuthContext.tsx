@@ -1,8 +1,9 @@
-import { getCurrentUser } from '@/lib/appwrite/api';
-import { IContextType, IUser } from '@/types';
-import React from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
+import { getCurrentUser } from '@/lib/appwrite/api';
+import { IContextType, INewUser, IUser } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import React from 'react'
+
 
 export const INITIAL_USER = {
     id: '',
@@ -28,8 +29,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode}) => {
     const [user, setUser] = useState<IUser>(INITIAL_USER)
     const [isLoading, setIsLoading] = useState(false)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
-
     const navigate = useNavigate()
+ 
     const checkAuthUser = async () => {
         try {
             const currentAccount = await getCurrentUser()
@@ -64,12 +65,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode}) => {
     }, [])
     const value = {
         user,
-        setUser,
         isLoading,
         isAuthenticated,
+        setUser,
         setIsAuthenticated,
         checkAuthUser
-
     }
 
   return (
