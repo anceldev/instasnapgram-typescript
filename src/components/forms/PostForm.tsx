@@ -149,7 +149,6 @@ const PostForm = ({ post, action }: PostFormProps) => {
                         {isLoadingCreate || isLoadingUpdate && 'Loading...'}
                         {action} Post
                     </Button>
-
                 </div>
             </form>
         </Form>
